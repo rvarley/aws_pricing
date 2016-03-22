@@ -1,0 +1,22 @@
+<!-- spot.html and spot.js create a table of spot prices -->
+
+<html>
+<body>
+  <h1 id="data2"></h1>
+<table id="data1">
+  <th width="150" align="left">Region</th>
+  <th width="350" align="left">Instance Type</th>
+  <th width="150" align="left">Size</th>
+  <th width="150" align="left">Spot Price</th>
+  <th align="left">On Demand Price</th>
+</table>
+
+<script src="js/spot.js"></script>  
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script> 
+<script src="http://spot-price.s3.amazonaws.com/spot.js?callback=callback"></script>
+<!-- <script src="http://a0.awsstatic.com/pricing/1/ec2/linux-od.min.js?callback=callback"></script>  -->
+<!-- <script src="js/index2.js"></script>  
+<script src="http://a0.awsstatic.com/pricing/1/ec2/linux-od.min.js?callback=callback"></script> -->
+
+</body>
+</html>
