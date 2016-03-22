@@ -11,19 +11,18 @@
 
 <div id="header" class="buttons">
 <input type='button' id='od-load' value='Load OD Pricing' onclick='loadOdData();'>
-<input type='button' id='spot-load' value='Add Spot Pricing' onclick='addSpotData();'>
 <script src="js/addSpotPricing.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script> 
 <script src="js/loadPricing.js"></script>  
 <script src="js/jquery.sticky.js"></script>
 
-<table id="data">
+<table id="data" border="1">
   <tr>
     <th colspan="4"></th>
     <th class="merged" colspan="2" align="center">OD Price</</th>
     <th class="merged" colspan="2" align="center">Spot Price</th>
   </tr>
-  <th width="150" align="left">Region</th>
+  <th align="left">Region</th>
   <th width="450" align="left">Instance Type</th>
   <th width="250" align="left">Size</th>
   <th width="150" align="left"># vCPU</th>
@@ -38,8 +37,8 @@
       $("#header").sticky({ topSpacing: 0 });
     });
   </script>
-<table id="data1">
-  <tr><tr>
+<table id="data1" border="1">
+  <tr></tr>
 </table>
 
 
