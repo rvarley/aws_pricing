@@ -13,11 +13,14 @@ $.ajax({
     dataType: 'jsonp',
     cache: true,
     jsonpCallback: 'callback',
-    success: function (spotData) {  
+    success: function (spotData) {
+            // remove the load button so user can't load data more than once
+            $('#spot-load').replaceWith('<h4 id="pricing">AWS Pricing</h2>');
             for (var i = 0; i < spotData.config.regions.length; i++){
                 var region = spotData.config.regions[i].region;
-                $('#data1 > tbody').append('<tr><td>' + region + '</td></tr>');
+                $('#data1 > tbody:last-child').append('<tr><td>' + region + '</td></tr>');
                 var curRegion = i;
+
                 // Add / Start Instart Instance Rows
                 for (var j = 0; j < spotData.config.regions[i].instanceTypes.length; j++){
                     var instanceType = spotData.config.regions[i].instanceTypes[j].type;
@@ -64,7 +67,7 @@ $.ajax({
                     }
                     else {
                       $('#data1 > tbody:last-child').append('<tr><td></td><td></td><td>'
-                        + instanceSize + '</td><td>' + vCPU + '</td><td></td><td></td><td>'  + instancePrice + '</td><td>' + pervCpu +'</td></tr>');
+                        + instanceSize + '</td><td>' + vCPU + '</td><td></td><td></td><td>'  + instancePrice + '</td><td>' + pervCpu +'</td>></tr>');
                     }
                 }
                 }
@@ -75,17 +78,22 @@ $("#header").sticky({topSpacing:0});
 }
 
 function loadOdData() {
-    console.log('in loadOData');
     $.ajax({
         url: 'http://a0.awsstatic.com/pricing/1/ec2/linux-od.min.js',
         dataType: 'jsonp',
         cache: true,
         jsonpCallback: 'callback',
         success: function (odData) {
+            // Don't allow user to load spot pricing unit after OD pricing has already been loaded
+            $('#od-load').replaceWith('<input type="button" id="spot-load" value="Add Spot Pricing" onclick="addSpotData()";>');
+            var curRegionTotal = 0; //Used to keep track of current region when 
+                        // creating region totals in innermost for loop.
             for (var i = 0; i < odData.config.regions.length; i++){
                 var region = odData.config.regions[i].region;
-                $('#data1 > tbody').append('<tr><td>' + region + '</td></tr>');
+                $('#data1 > tbody').append('<tr><td id="col1">' + region + '</td></tr>');
                 var curRegion = i;
+
+
                 // Add / Start Instart Instance Rows
                 for (var j = 0; j < odData.config.regions[i].instanceTypes.length; j++){
                     var instanceType = odData.config.regions[i].instanceTypes[j].type;
@@ -99,25 +107,33 @@ function loadOdData() {
                     $('#data1 > tbody:last-child').append('<tr><td></td><td>' + instanceType + '</td></tr>');
                 }
                 var curInstance = j;
-                // Append instance size, # vCPU and price
-                for (var k = 0; k < odData.config.regions[i].instanceTypes[j].sizes.length; k++) {
-                    var instanceSize = odData.config.regions[i].instanceTypes[j].sizes[k].size;
-                    var vCPU = odData.config.regions[i].instanceTypes[j].sizes[k].vCPU;
-                    var instancePrice = odData.config.regions[i].instanceTypes[j].sizes[k].valueColumns[0].prices.USD;
-                    instancePrice = parseFloat(instancePrice).toFixed(4);
-                    var pervCpu = instancePrice/vCPU;
-                    pervCpu = pervCpu.toFixed(4);
 
-                    if (curInstance === j) {
-                      $('#data1 > tbody > tr:last-child').append('<td>' + instanceSize + 
-                        '</td><td>' + vCPU + '</td><td>' + instancePrice + '</td><td>' + pervCpu + '</td></tr>');
-                      curInstance++;
+                // Append instance size, #vCPU, total price, price per vCPU
+                    for (var k = 0; k < odData.config.regions[i].instanceTypes[j].sizes.length; k++) {
+                        var instanceSize = odData.config.regions[i].instanceTypes[j].sizes[k].size;
+
+                        var vCPU = odData.config.regions[i].instanceTypes[j].sizes[k].vCPU;
+
+                        var instancePrice = odData.config.regions[i].instanceTypes[j].sizes[k].valueColumns[0].prices.USD;
+                        instancePrice = parseFloat(instancePrice).toFixed(4);
+
+                        var pervCpu = instancePrice/vCPU;
+                        pervCpu = pervCpu.toFixed(4);
+
+                        if (curInstance === j) {
+                          $('#data1 > tbody > tr:last-child').append('<td>' + instanceSize + 
+                            '</td><td>' + vCPU + '</td><td>' + instancePrice + '</td><td>' + pervCpu + '</td><td></td><td></td></tr>');
+                          curInstance++;
+                        }
+                        else {
+                          $('#data1 > tbody:last-child').append('<tr><td></td><td></td><td>'
+                            + instanceSize + '</td><td>' + vCPU + '</td><td>'  + instancePrice + '</td><td>' + pervCpu +'</td><td></td><td></td></tr>');
+                        }
+
+                        // Add to region totals
+                        if (curRegionTotal === i)
+                        curRegionTotal++  // incremented at end of for loop
                     }
-                    else {
-                      $('#data1 > tbody:last-child').append('<tr><td></td><td></td><td>'
-                        + instanceSize + '</td><td>' + vCPU + '</td><td>'  + instancePrice + '</td><td>' + pervCpu +'</td></tr>');
-                    }
-                }
                 }
             }
         }
