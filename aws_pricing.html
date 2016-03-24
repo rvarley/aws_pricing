@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<!-- ondemand.html and ondemand.js make a table of linux OD values -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link href='https://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="./css/style.css">
+  <title>AWS Pricing</title>
+</head>
+<body>
+
+<div id="header" class="buttons">
+<input type='button' id='od-load' class='load-button' value='Load OD Pricing' onclick='loadOdData();'>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script> 
+<script src="js/aloadPricing.js"></script>  
+<script src="js/jquery.sticky.js"></script>
+
+<table id="data" border="1">
+  <tr>
+    <th colspan="4"></th>
+    <th class="merged" colspan="2" align="center">OD Price</</th>
+    <th class="merged" colspan="2" align="center">Spot Price</th>
+  </tr>
+  <th align="left">Region</th>
+  <th width="450" align="left">Instance Type</th>
+  <th width="250" align="left">Size</th>
+  <th width="150" align="left"># vCPU</th>
+  <th width="250" align="left">Per Instance</th>
+  <th width="250" align="left">Per vCPU</th>
+  <th width="250" align="left">Per Instance</th>
+  <th width="250" align="left">Per vCPU</th>
+</table>
+</div>
+  <script>
+    $(window).load(function(){
+      $("#header").sticky({ topSpacing: 0 });
+    });
+  </script>
+<table id="data1" border="1">
+  <tr id="first-row"></tr>
+</table>
+
+
+</body>
+</html>
