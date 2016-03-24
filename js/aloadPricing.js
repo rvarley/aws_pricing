@@ -3,11 +3,11 @@
 var odLoadButton = document.getElementById("od-load");
 odLoadButton.onclick = loadOdData;
 
-// var spotLoadButton = document.getElementById("spot-load");
-// spotLoadButton.onclick = addSpotData;
+var lowestOdObj = {};  //Sorry for the global variables ... getting down to the wire
+var lowestSpotObj = {};
 
 function addSpotData() {
-    console.log('in addSpotData');
+
 $.ajax({
     url: 'http://spot-price.s3.amazonaws.com/spot.js',
     dataType: 'jsonp',
@@ -17,10 +17,18 @@ $.ajax({
             // remove the load button so user can't load data more than once
             $('#spot-load').replaceWith('<h4 id="pricing">AWS Pricing</h2>');
             var odRegions = {}; // object to hold all regions, all price / vCPU
+            var regTotObj = {}; // object to hold each region and its average perVcpu cost 
             var regions = []; // array to hold region / per vCPU pricing
             // Parse json data for required information
             for (var i = 0; i < spotData.config.regions.length; i++){
+                var regionTot = 0; // holds total number vCPU prices per region
+                var regTotCounter = 0; // counts total number of region -> instance -> size.  
+                                       // For calculation ave aveRegionCost
+                var aveRegionCost = 0; // Holds average perVCPU cost for a given region
                 var region = spotData.config.regions[i].region;
+                var location = {};  // object to hold a region and all its prices
+                location.region = region;  // add region to location object
+                location.price = [];  // add price to location object 
                 // Start a region object
                 var newRegion = {region:region, price:[]};
                 $('#data1 > tbody:last-child').append('<tr><td>' + region + '</td></tr>');
@@ -49,7 +57,7 @@ $.ajax({
                         vCPU = sizevCpuLookup(instanceSize);
                         instancePrice = spotData.config.regions[i].instanceTypes[j].sizes[k].valueColumns[0].prices.USD;
 
-                        // To account for cases where instance isn't priced
+                        // To account for cases where instanceType.size isn't priced
                         if (! isNaN(instancePrice)) {
                             instancePrice = parseFloat(instancePrice).toFixed(4);
                         }
@@ -60,7 +68,7 @@ $.ajax({
                         if ((instancePrice !== 'N/A')){
                             vCPU = parseFloat(vCPU);
                             pervCpu = instancePrice/vCPU;
-                            pervCpu = pervCpu.toFixed(4);
+                            pervCpu = parseFloat(pervCpu.toFixed(4));
                         }
                         // else set price/vCPU to 'N/A'
                         else {
@@ -76,15 +84,28 @@ $.ajax({
                           $('#data1 > tbody:last-child').append('<tr><td></td><td></td><td>'
                             + instanceSize + '</td><td>' + vCPU + '</td><td></td><td></td><td>'  + instancePrice + '</td><td>' + pervCpu +'</td>></tr>');
                         }
-                        // newRegion.price.push(pervCPU); // add the pervCPU price to the region object
+                        if (pervCpu !== 'N/A') {  // some older spot instances don't have pricing
+                                                  // so we won't include them in average price per region calculation
+                            location.price.push(pervCpu);
+                            regionTot += pervCpu;
+                            regTotCounter++;
+                        }
                     } // end k for loop
+
                 } // end j for loop
-                // odRegions.regions.push(newRegion);
-                // console.log('odRegions at end of outer for:', odRegions);
+                regions.push(location);
+                aveRegionCost = regionTot / regTotCounter;
+                odRegTotals.regions = region;
+                regTotObj[region] = parseFloat(aveRegionCost).toFixed(4);
+
             } // endi i for loop
-    }
-});
+            lowestSpotObj = {};
+            lowestSpotObj = getSmallest(regTotObj);
+            lowestSpotObj.priceType = 'Spot';
+    } // ends success function
+}); // end ajax call
 $("#header").sticky({topSpacing:0});
+$('#header:last-child').append('<input type="button" id="lowest-spot" value="Spot pricing details" onclick="displayPricingDetails(lowestSpotObj)";>');
 }
 
 function loadOdData() {
@@ -95,9 +116,9 @@ function loadOdData() {
         cache: true,
         jsonpCallback: 'callback',
         success: function (odData) {
+
             // Don't allow user to load spot pricing unit after OD pricing has already been loaded
-            $('#od-load').replaceWith('<input type="button" id="spot-load" value="Add Spot Pricing" onclick="addSpotData()";>');
-            // $('<input type="button" id="top-ten" value="Display pricing details" onclick="displayPricingDetails(odRegTotals)";>').insertAfter("#od-load");
+            $('#od-load').replaceWith('<input type="button" id="spot-load" class="load-button" value="Add Spot Pricing" onclick="addSpotData()";>');
             var regions = []; // array to hold each region / vCPU price object
             var regTotObj = {}; // object to hold each region and its perVcpu cost
             for (var i = 0; i < odData.config.regions.length; i++){
@@ -108,6 +129,7 @@ function loadOdData() {
                 var location = {};  // object to hold a region and all its prices
                 location.region = region; // add region to location object
                 location.price = []; // initialize the object with an empty price array
+
                 $('#data1 > tbody').append('<tr><td id="col1">' + region + '</td></tr>');
                 var curRegion = i;
 
@@ -115,18 +137,20 @@ function loadOdData() {
                 // Add / Start Instart Instance Rows
                 for (var j = 0; j < odData.config.regions[i].instanceTypes.length; j++){
                     var instanceType = odData.config.regions[i].instanceTypes[j].type;
-                  // Add instanceTyep to existing row first time through outer for
+
+                // Add instanceType to existing row first time through outer for
                 if (i === curRegion){
                     $('#data1 > tbody > tr:last-child').append('<td>' + instanceType + '</td>');
                     curRegion++;
                 }
+
                 // Add new row starting with 1 blank td and td with instanceType
                 else {
                     $('#data1 > tbody:last-child').append('<tr><td></td><td>' + instanceType + '</td></tr>');
                 }
                 var curInstance = j;
 
-                // Append instance size, #vCPU, total price, price per vCPU
+                    // Append instance size, #vCPU, total price, price per vCPU
                     for (var k = 0; k < odData.config.regions[i].instanceTypes[j].sizes.length; k++) {
                         var instanceSize = odData.config.regions[i].instanceTypes[j].sizes[k].size;
 
@@ -150,41 +174,43 @@ function loadOdData() {
                         location.price.push(pervCpu);
                         regionTot += pervCpu;
                         regTotCounter++;
-                        // console.log('location object at end of j for: ', location);
-                        // Add to region totals
                     } // End of k for
+
                 } // End of j for
+
                 regions.push(location);
-                // console.log('regions at end of i for: ', regions);
                 aveRegionCost = regionTot / regTotCounter;
-                // console.log('region, aveRegionCost, regTotCounter: ', region, aveRegionCost, regTotCounter);
                 odRegTotals.regions = region;
                 regTotObj[region] = parseFloat(aveRegionCost).toFixed(4);
             } // End of i for
-            // console.log('regTotObj: ', regTotObj);
-            lowestObj = {};
-            lowestObj = getSmallest(regTotObj);
-            lowestObj.priceType = 'on demand';
-            console.log('lowestObj below outer for: ', lowestObj);
+
+            lowestOdObj = {};
+            lowestOdObj = getSmallest(regTotObj);
+            lowestOdObj.priceType = 'on demand';
         }
     });
-    $('#header:last-child').append('<input type="button" id="top-ten" value="Display pricing details" onclick="displayPricingDetails(lowestObj)";>');
+    $('#header:last-child').append('<input type="button" id="lowest-od" value="OD pricing details" onclick="displayPricingDetails(lowestOdObj)";>');
 }
 
-// Function to determine the number of vCPUs for a given spot instance size.  
-// Spot data doesn't include # vCPU's
-
-
 function displayPricingDetails(regionPriceObj){
-    console.log('in displayPricingDetails regionPriceObj: ', regionPriceObj);
-    console.log('lowest price is: ', regionPriceObj.price);
-    console.log('places with lowest price are: ', regionPriceObj.places);
-    $('body').replaceWith('<p>Lowest priced ' + regionPriceObj.priceType + ' regions: ' + regionPriceObj.places + 
-        '. </p><p>Price per vCPU: ' + regionPriceObj.price + '</p>');
-    // $('html:last-child').append('<p> Lowest price is: ' + regionPriceObj.price + '</p>');
+
+    $('#data').remove();
+    $('#data1').remove();
+    $('.load-button').remove();
+    if (regionPriceObj.priceType === "on demand") {  // only write over the page if the OD data was requested
+        $('#lowest-od').remove();
+        $('body:last-child').append('<h3>Lowest priced ' + regionPriceObj.priceType + ' regions: ' + regionPriceObj.places + 
+        '. </h3><h3 class="indent">' + '     * Average price per vCPU: ' + regionPriceObj.price + '</h3>');
+    }
+    else {
+        $('#lowest-spot').remove();
+        $('body:last-child').append('<h3>Lowest priced ' + regionPriceObj.priceType + ' regions: ' + regionPriceObj.places + 
+        '. </h3><h3 class="indent">' + '     * Average price per vCPU: ' + regionPriceObj.price + '</h3>');
+    }
 }
 
 function getSmallest(obj) {
+
     // Takes in a object containing a regions and average prices 
     // Returns an object with a single lowest price and an array of places
     // that have this lowest price.
@@ -206,21 +232,18 @@ function getSmallest(obj) {
     var places = []
     for (place in obj) {
         if (obj[place] === min) {
-            // console.log('places with lowest value: ', place, obj[place]);
             places.push(place);
         }
     }
-    // console.log('key, min: ', key, min);
-    // console.log('obj: ', obj);
     lowestObj = {};
     lowestObj.price = min;
     lowestObj.places = places;
-    console.log('lowestObj in getSmallest is: ', lowestObj);
     return lowestObj; 
 }
 
+// Function to determine the number of vCPUs for a given spot instance size.  
+// Spot data doesn't include # vCPU's
 function sizevCpuLookup(size) {
-    // console.log('value of size in sizevCpuLookup: ', size);
     // Looked up missing # vCPU's per instanceType.size here:
     // http://aws.amazon.com/ec2/previous-generation/
 
