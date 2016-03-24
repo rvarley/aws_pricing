@@ -1,7 +1,7 @@
 AWS Pricing 
 -------------------
 
-** This is a tool to pull spot and on demand pricing from AWS API ***
+** This is a tool to pull spot and on demand pricing from AWS API **
 
 Built With
 ----------
