@@ -40,6 +40,17 @@ th {
     padding-left: 10mm;
 }
 
+h3 {
+    font-family: 'Roboto', sans-serif;
+    padding-left: 10mm;
+}
+
+.indent {
+    padding-left: 20mm;
+    padding-bottom: 10mm;
+
+}
+
 .merged {
     text-align: center;
 }
