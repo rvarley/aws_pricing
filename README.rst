@@ -20,7 +20,7 @@ Requirements
 Site Demo
 ---------
 
-.. image:: demo.mp4
+.. image:: demo.gif
 
 
 To Do's
